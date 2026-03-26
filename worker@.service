@@ -1,0 +1,26 @@
+[Unit]
+Description=Worker %i (QR opener)
+After=network-online.target redis-server.service
+Wants=network-online.target redis-server.service
+
+[Service]
+Type=simple
+User=azureuser
+WorkingDirectory=/home/azureuser/selenium_test
+Environment=PYTHONUNBUFFERED=1
+
+ExecStartPre=/usr/bin/mkdir -p /home/azureuser/chrome-profiles/worker-%i
+ExecStartPre=/usr/bin/find /home/azureuser/chrome-profiles/worker-%i -maxdepth 1 -type f -name 'Singleton*' -delete
+
+ExecStart=/home/azureuser/selenium_test/venv/bin/python3 \
+  /home/azureuser/selenium_test/app/worker_stream.py \
+  --profile /home/azureuser/chrome-profiles/worker-%i \
+  --consumer worker-%i \
+  --group workers
+
+Restart=always
+RestartSec=2
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
